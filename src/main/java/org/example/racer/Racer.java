@@ -7,7 +7,6 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 
 import java.util.Random;
@@ -28,7 +27,7 @@ public class Racer extends AbstractBehavior<Racer.Command> {
     @AllArgsConstructor
     public static class PositionCommand implements Command {
         private static final long serialVersionUID = 1L;
-        private ActorRef<RaceController .Command> controller;
+        private ActorRef<RaceController.Command> controller;
 
     }
 
@@ -40,7 +39,6 @@ public class Racer extends AbstractBehavior<Racer.Command> {
         return Behaviors.setup(Racer::new);
     }
 
-    private final double defaultAverageSpeed = 42.2;
     private int averageSpeedAdjustmentFactor;
     private Random random;
 
@@ -49,6 +47,7 @@ public class Racer extends AbstractBehavior<Racer.Command> {
     private int raceLength;
 
     private double getMaxSpeed() {
+        double defaultAverageSpeed = 42.2;
         return defaultAverageSpeed * (1 + ((double) averageSpeedAdjustmentFactor / 100));
     }
 
@@ -57,19 +56,21 @@ public class Racer extends AbstractBehavior<Racer.Command> {
     }
 
     private void determineNextSpeed() {
-        if (currentPosition < (raceLength / 4)) {
+        if (currentPosition < ((double) raceLength / 4)) {
             currentSpeed = currentSpeed + (((getMaxSpeed() - currentSpeed) / 10) * random.nextDouble());
         } else {
             currentSpeed = currentSpeed * (0.5 + random.nextDouble());
         }
 
-        if (currentSpeed > getMaxSpeed())
+        if (currentSpeed > getMaxSpeed()) {
             currentSpeed = getMaxSpeed();
+        }
 
-        if (currentSpeed < 5)
+        if (currentSpeed < 5) {
             currentSpeed = 5;
+        }
 
-        if (currentPosition > (raceLength / 2) && currentSpeed < getMaxSpeed() / 2) {
+        if (currentPosition > ((double) raceLength / 2) && currentSpeed < getMaxSpeed() / 2) {
             currentSpeed = getMaxSpeed() / 2;
         }
     }
@@ -79,17 +80,17 @@ public class Racer extends AbstractBehavior<Racer.Command> {
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
                 .onMessage(StartCommand.class, message -> {
-                    this.raceLength = message.raceLength;
+                    this.raceLength = message.getRaceLength();
                     this.random = new Random();
                     this.averageSpeedAdjustmentFactor = random.nextInt(30) - 10;
                     return this;
                 })
                 .onMessage(PositionCommand.class, message -> {
                     determineNextSpeed();
-                    determineNextSpeed();
                     currentPosition += getDistanceMovedPerSecond();
-                    if (currentPosition > raceLength )
-                        currentPosition  = raceLength;
+                    if (currentPosition > raceLength) {
+                        currentPosition = raceLength;
+                    }
                     message.getController().tell(new RaceController.RacerUpdateCommand(getContext().getSelf(), (int) currentPosition));
                     return this;
                 })
