@@ -9,6 +9,8 @@ import akka.actor.typed.javadsl.Receive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.Random;
 
 public class Racer extends AbstractBehavior<Racer.Command> {
@@ -43,8 +45,6 @@ public class Racer extends AbstractBehavior<Racer.Command> {
     private Random random;
 
     private double currentSpeed = 0;
-    private double currentPosition = 0;
-    private int raceLength;
 
     private double getMaxSpeed() {
         double defaultAverageSpeed = 42.2;
@@ -55,7 +55,7 @@ public class Racer extends AbstractBehavior<Racer.Command> {
         return currentSpeed * 1000 / 3600;
     }
 
-    private void determineNextSpeed() {
+    private void determineNextSpeed(int currentPosition, int raceLength) {
         if (currentPosition < ((double) raceLength / 4)) {
             currentSpeed = currentSpeed + (((getMaxSpeed() - currentSpeed) / 10) * random.nextDouble());
         } else {
@@ -78,21 +78,48 @@ public class Racer extends AbstractBehavior<Racer.Command> {
 
     @Override
     public Receive<Command> createReceive() {
+        return notYetStarted();
+    }
+
+
+    public Receive<Command> notYetStarted() {
         return newReceiveBuilder()
                 .onMessage(StartCommand.class, message -> {
-                    this.raceLength = message.getRaceLength();
                     this.random = new Random();
                     this.averageSpeedAdjustmentFactor = random.nextInt(30) - 10;
-                    return this;
+                    return running(message.getRaceLength(), 0);
                 })
                 .onMessage(PositionCommand.class, message -> {
-                    determineNextSpeed();
-                    currentPosition += getDistanceMovedPerSecond();
-                    if (currentPosition > raceLength) {
-                        currentPosition = raceLength;
+                    message.getController().tell(new RaceController.RacerUpdateCommand(getContext().getSelf(), 0));
+                    return Behaviors.same();
+                })
+                .build();
+    }
+
+    public Receive<Command> running(int raceLength, int currentPosition) {
+        return newReceiveBuilder()
+                .onMessage(PositionCommand.class, message -> {
+                    determineNextSpeed(currentPosition, raceLength);
+                    int newPosition = currentPosition;
+                    newPosition += getDistanceMovedPerSecond();
+                    if (newPosition > raceLength) {
+                        newPosition = raceLength;
                     }
-                    message.getController().tell(new RaceController.RacerUpdateCommand(getContext().getSelf(), (int) currentPosition));
-                    return this;
+                    message.getController().tell(new RaceController.RacerUpdateCommand(getContext().getSelf(), (int) newPosition));
+                    if (newPosition == raceLength) {
+                        return completed(raceLength);
+                    } else {
+                        return running(raceLength, newPosition);
+                    }
+                })
+                .build();
+    }
+
+    public Receive<Command> completed(int raceLength) {
+        return newReceiveBuilder()
+                .onMessage(PositionCommand.class, message -> {
+                    message.getController().tell(new RaceController.RacerUpdateCommand(getContext().getSelf(), raceLength));
+                    return Behaviors.same();
                 })
                 .build();
     }
