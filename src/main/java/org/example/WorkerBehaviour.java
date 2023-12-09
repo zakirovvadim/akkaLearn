@@ -45,8 +45,12 @@ public class WorkerBehaviour extends AbstractBehavior<WorkerBehaviour.Command> {
                 .onAnyMessage(command -> {
                     BigInteger bigInteger = new BigInteger(2000, new Random());
                     BigInteger prime = bigInteger.nextProbablePrime();
-                    command.getSender().tell(new ManagerBehavior.ResultCommand(prime));
+                    Random r = new Random();
+                    if (r.nextInt(5) < 2) {
+                        command.getSender().tell(new ManagerBehavior.ResultCommand(prime));
+                    }
                     return handleMessageWhenWeAlreadyHaveAPromerNumber(prime);
+
                 })
                 .build();
     }
@@ -54,10 +58,11 @@ public class WorkerBehaviour extends AbstractBehavior<WorkerBehaviour.Command> {
     public Receive<Command> handleMessageWhenWeAlreadyHaveAPromerNumber(BigInteger prime) {
         return newReceiveBuilder()
                 .onAnyMessage(command -> {
-                    if (command.getMessage().equals("start")) {
+                    Random r = new Random();
+                    if (r.nextInt(5) < 2) {
                         command.getSender().tell(new ManagerBehavior.ResultCommand(prime));
                     }
-                    return this;
+                    return Behaviors.same();
                 })
                 .build();
     }
