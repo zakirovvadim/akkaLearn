@@ -1,6 +1,7 @@
 package org.example.blocChainMainingMultithread.model;
 
-import utils.BlockChainUtils;
+
+import org.example.blocChainMainingMultithread.utils.BlockChainUtils;
 
 import java.util.LinkedList;
 

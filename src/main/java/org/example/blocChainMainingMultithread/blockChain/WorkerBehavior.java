@@ -1,4 +1,4 @@
-package org.example.blocChainMainingMultithread;
+package org.example.blocChainMainingMultithread.blockChain;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -6,7 +6,7 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import org.example.blocChainMainingMultithread.ManagerBehaviour;
+import org.example.blocChainMainingMultithread.utils.BlockChainUtils;
 import org.example.blocChainMainingMultithread.model.Block;
 import org.example.blocChainMainingMultithread.model.HashResult;
 
@@ -18,9 +18,9 @@ public class WorkerBehavior extends AbstractBehavior<WorkerBehavior.Command> {
             private Block block;
             private int startNonce;
             private int difficulty;
-            private ActorRef<ManagerBehaviour.Command> controller;
+            private ActorRef<ManagerBehavior.Command> controller;
 
-            public Command(Block block, int startNonce, int difficulty, ActorRef<ManagerBehaviour.Command> controller) {
+            public Command(Block block, int startNonce, int difficulty, ActorRef<ManagerBehavior.Command> controller) {
                 this.block = block;
                 this.startNonce = startNonce;
                 this.difficulty = difficulty;
@@ -36,7 +36,7 @@ public class WorkerBehavior extends AbstractBehavior<WorkerBehavior.Command> {
             public int getDifficulty() {
                 return difficulty;
             }
-            public ActorRef<ManagerBehaviour.Command> getController() { return controller; }
+            public ActorRef<ManagerBehavior.Command> getController() { return controller; }
         }
 
         private WorkerBehavior(ActorContext<Command> context) {
@@ -66,17 +66,12 @@ public class WorkerBehavior extends AbstractBehavior<WorkerBehavior.Command> {
                             HashResult hashResult = new HashResult();
                             hashResult.foundAHash(hash, nonce);
                             getContext().getLog().debug(hashResult.getNonce() + " : " + hashResult.getHash());
-                            message.getController().tell(new ManagerBehaviour.HashResultCommand(hashResult));
+                            message.getController().tell(new ManagerBehavior.HashResultCommand(hashResult));
                             return Behaviors.same();
                         }
                         else {
                             getContext().getLog().debug("null");
                             Random r = new Random();
-//						if (r.nextInt(10) == 3) {
-//							throw new ArithmeticException("no hash found");
-//						}
-
-
                             return Behaviors.stopped();
                         }
                     })

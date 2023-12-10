@@ -1,4 +1,4 @@
-package org.example.blocChainMainingMultithread;
+package org.example.blocChainMainingMultithread.utils;
 
 import org.example.blocChainMainingMultithread.model.Block;
 

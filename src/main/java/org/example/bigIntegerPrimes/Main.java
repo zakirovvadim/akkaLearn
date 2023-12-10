@@ -1,4 +1,4 @@
-package org.example;
+package org.example.bigIntegerPrimes;
 
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.javadsl.AskPattern;
