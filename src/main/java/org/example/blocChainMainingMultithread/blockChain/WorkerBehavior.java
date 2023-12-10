@@ -71,7 +71,10 @@ public class WorkerBehavior extends AbstractBehavior<WorkerBehavior.Command> {
                         }
                         else {
                             getContext().getLog().debug("null");
-                            Random r = new Random();
+//                            Random r = new Random();
+//                            if (r.nextInt(10) == 3) {
+//                                throw new ArithmeticException("no hash found");
+//                            }
                             return Behaviors.stopped();
                         }
                     })
